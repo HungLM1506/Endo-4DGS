@@ -573,9 +573,50 @@ def readScaredInfo(datadir, use_bg_points, eval):
     return scene_info
 
 
+def readEndoCustomInfo(datadir):
+    # load camera infos
+    from scene.endo_loader import EndoCustom_Dataset
+    endo_dataset = EndoCustom_Dataset(
+        data_dir=datadir,
+    )
+    train_cam_infos = endo_dataset.format_infos(split="train")
+    test_cam_infos = endo_dataset.format_infos(split="test")
+    video_cam_infos = endo_dataset.format_infos(split="video")
+
+    # get normalizations
+    nerf_normalization = getNerfppNorm(train_cam_infos)
+
+    # initialize sparse point clouds
+    ply_path = os.path.join(datadir, "points3d.ply")
+    xyz, rgb, normals = endo_dataset.get_init_pts()
+
+    normals = np.random.random((xyz.shape[0], 3))
+    pcd = BasicPointCloud(points=xyz, colors=rgb, normals=normals)
+    storePly(ply_path, xyz, rgb*255)
+
+    try:
+        pcd = fetchPly(ply_path)
+    except:
+        pcd = None
+
+    # get the maximum time
+    maxtime = endo_dataset.get_maxtime()
+
+    scene_info = SceneInfo(point_cloud=pcd,
+                           train_cameras=train_cam_infos,
+                           test_cameras=test_cam_infos,
+                           video_cameras=video_cam_infos,
+                           nerf_normalization=nerf_normalization,
+                           ply_path=ply_path,
+                           maxtime=maxtime)
+
+    return scene_info
+
+
 
 sceneLoadTypeCallbacks = {
     "Colmap": readColmapSceneInfo,
+    "endo_custom": readEndoCustomInfo,
     "Blender" : readNerfSyntheticInfo,
     "dynerf" : readdynerfInfo,
     "nerfies": readHyperDataInfos,  # NeRFies & HyperNeRF dataset proposed by [https://github.com/google/hypernerf/releases/tag/v0.1]
