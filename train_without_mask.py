@@ -36,6 +36,7 @@ import cv2
 import torch
 import random
 import numpy as np
+import fpsample
 import faulthandler
 faulthandler.enable()
 
