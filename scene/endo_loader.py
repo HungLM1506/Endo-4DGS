@@ -706,7 +706,11 @@ class EndoCustom_Dataset(object):
             # mask = self.transform(mask).bool()
             # color
             color = np.array(Image.open(self.image_paths[idx]))/255.0
-            image = self.transform(color)
+
+            depth = torch.from_numpy(np.ascontiguousarray(depth))
+            image = self.transform(np.ascontiguousarray(color))
+            pc = None
+            # image = self.transform(color)
             # times
             time = self.image_times[idx]
             # poses
@@ -715,9 +719,13 @@ class EndoCustom_Dataset(object):
             FovX = focal2fov(self.focal[0], self.W)
             FovY = focal2fov(self.focal[1], self.H)
 
-            cameras.append(Camera(colmap_id=idx, R=R, T=T, FoVx=FovX, FoVy=FovY, image=image, depth=depth, mask=None, gt_alpha_mask=None,
-                                  image_name=f"{idx}", uid=idx, data_device=torch.device("cuda"), time=time,
-                                  Znear=None, Zfar=None))
+            # cameras.append(Camera(colmap_id=idx, R=R, T=T, FoVx=FovX, FoVy=FovY, image=image, depth=depth, mask=None, gt_alpha_mask=None,
+            #                       image_name=f"{idx}", uid=idx, data_device=torch.device("cuda"), time=time,
+            #                       Znear=None, Zfar=None))
+            cameras.append(CameraInfo(uid=idx, R=R, T=T, FovY=FovY, FovX=FovX, image=image, depth=depth, mask=None,
+                                      image_path=self.image_paths[idx], image_name=self.image_paths[
+                                          idx], width=image.shape[2], height=image.shape[1],
+                                      time=time, Znear=None, Zfar=None, pc=pc))
         return cameras
 
 
