@@ -248,6 +248,7 @@ def scene_reconstruction(mp, opt, hyper, pipe, testing_iterations, saving_iterat
         depth_tensor = torch.cat(depths, 0)
         gt_image_tensor = torch.cat(gt_images, 0)
         gt_depth_tensor = torch.cat(gt_depths, 0)
+        gt_depth_tensor = gt_depth_tensor.permute(0,3,1,2)
 
         if use_normal:
             gs_normal = torch.cat(gs_normal, 0)
