@@ -268,8 +268,7 @@ def scene_reconstruction(mp, opt, hyper, pipe, testing_iterations, saving_iterat
 
         if use_smooth:
             grad_weight = hyper.depth_weight
-            sm_loss = grad_loss(depth_tensor, gt_depth_tensor,
-                                mask=None) * grad_weight
+            sm_loss = grad_loss(depth_tensor, gt_depth_tensor,) * grad_weight
             loss += sm_loss
 
         if use_normal:
