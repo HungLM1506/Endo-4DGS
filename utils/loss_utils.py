@@ -417,13 +417,73 @@ def grad_mask(mask):
 class GradL1Loss(nn.Module):
     """Gradient loss"""
 
+    # def __init__(self):
+    #     super(GradL1Loss, self).__init__()
+    #     self.name = 'GradL1'
+    #     self.pc_loss = PearsonCorrCoef().cuda()
+
+    # def forward(self, input, target, mask=None, interpolate=True, return_interpolated=False):
+    #     mask = mask[None]
+    #     input = extract_key(input, KEY_OUTPUT)
+    #     if input.shape[-1] != target.shape[-1] and interpolate:
+    #         input = nn.functional.interpolate(
+    #             input, target.shape[-2:], mode='bilinear', align_corners=True)
+    #         intr_input = input
+    #     else:
+    #         intr_input = input
+
+    #     grad_gt = grad(target)
+    #     grad_pred = grad(input)
+    #     mask_g = grad_mask(mask)
+    #     # print(grad_pred[0].shape)
+    #     # print(grad_gt[0].shape)
+    #     # print(grad_pred[1].shape)
+
+    #     # print(mask_g.shape)
+    #     # print(grad_pred[1][mask_g].shape)
+    #     # print(grad_gt[0][mask_g].shape)
+    #     # print(grad_gt[1][mask_g].shape)
+    #     # print(grad_gt[0].max())
+    #     # print(grad_pred[0][mask_g].max())
+    #     # print(grad_gt[1][mask_g].max())
+    #     # print(grad_pred[1][mask_g].max())
+
+    #     mask_mag = ~torch.logical_or(torch.isnan(grad_pred[0]),
+    #                                  ~mask_g.expand(-1, grad_pred[0].shape[1], -1, -1))
+    #     mask_mag = mask_mag*grad_pred[0] > 0
+    #     # mask_ang = ~torch.logical_or(torch.isnan(grad_pred[1]), \
+    #     #     ~mask_g.expand(-1, grad_pred[1].shape[1], -1, -1))
+    #     # cv2.imwrite('mag.png', (grad_gt[0]*mask_g/(grad_gt[0]*mask_g).max()*255).squeeze(0).permute(1,2,0).detach().cpu().numpy().astype(np.uint8))
+    #     # exit()
+    #     # loss = (1 - self.pc_loss(grad_pred[0][mask_g][:, None], grad_gt[0][mask_g][:, None]))
+    #     # loss = loss + (1 - self.pc_loss(grad_pred[1][mask_g][:, None], grad_gt[1][mask_g][:, None]))
+    #     # print(grad_pred[0][mask_mag])
+    #     # print(grad_pred[1][mask_mag])
+    #     # print(torch.sum(torch.isnan(grad_pred[0])))
+    #     # print(torch.sum(torch.isnan(grad_pred[1])))
+    #     # print(self.pc_loss(grad_pred[0][mask_mag][:, None], grad_gt[0][mask_mag][:, None]))
+    #     if min(grad_pred[0][mask_mag][:, None].shape) == 0:
+    #         loss = 0
+    #     else:
+    #         loss = (
+    #             1 - self.pc_loss(grad_pred[0][mask_mag][:, None], grad_gt[0][mask_mag][:, None]))
+    #     # if min(grad_pred[1][mask_ang][:, None].shape) == 0:
+    #     #     loss = loss + 0
+    #     # else:
+    #     #     loss = loss + (1 - self.pc_loss(grad_pred[1][mask_ang][:, None], grad_gt[1][mask_ang][:, None]))
+
+    #     # loss = nn.functional.l1_loss(grad_pred[0][mask_g], grad_gt[0][mask_g])
+    #     # loss = loss + \
+    #     #     nn.functional.l1_loss(grad_pred[1][mask_g], grad_gt[1][mask_g])
+    #     if not return_interpolated:
+    #         return loss
+    #     return loss, intr_input
     def __init__(self):
         super(GradL1Loss, self).__init__()
         self.name = 'GradL1'
         self.pc_loss = PearsonCorrCoef().cuda()
 
-    def forward(self, input, target, mask=None, interpolate=True, return_interpolated=False):
-        mask = mask[None]
+    def forward(self, input, target, interpolate=True, return_interpolated=False):
         input = extract_key(input, KEY_OUTPUT)
         if input.shape[-1] != target.shape[-1] and interpolate:
             input = nn.functional.interpolate(
@@ -434,47 +494,12 @@ class GradL1Loss(nn.Module):
 
         grad_gt = grad(target)
         grad_pred = grad(input)
-        mask_g = grad_mask(mask)
-        # print(grad_pred[0].shape)
-        # print(grad_gt[0].shape)
-        # print(grad_pred[1].shape)
 
-        # print(mask_g.shape)
-        # print(grad_pred[1][mask_g].shape)
-        # print(grad_gt[0][mask_g].shape)
-        # print(grad_gt[1][mask_g].shape)
-        # print(grad_gt[0].max())
-        # print(grad_pred[0][mask_g].max())
-        # print(grad_gt[1][mask_g].max())
-        # print(grad_pred[1][mask_g].max())
+        grad_pred_0 = grad_pred[0]
+        grad_gt_0 = grad_gt[0]
 
-        mask_mag = ~torch.logical_or(torch.isnan(grad_pred[0]),
-                                     ~mask_g.expand(-1, grad_pred[0].shape[1], -1, -1))
-        mask_mag = mask_mag*grad_pred[0] > 0
-        # mask_ang = ~torch.logical_or(torch.isnan(grad_pred[1]), \
-        #     ~mask_g.expand(-1, grad_pred[1].shape[1], -1, -1))
-        # cv2.imwrite('mag.png', (grad_gt[0]*mask_g/(grad_gt[0]*mask_g).max()*255).squeeze(0).permute(1,2,0).detach().cpu().numpy().astype(np.uint8))
-        # exit()
-        # loss = (1 - self.pc_loss(grad_pred[0][mask_g][:, None], grad_gt[0][mask_g][:, None]))
-        # loss = loss + (1 - self.pc_loss(grad_pred[1][mask_g][:, None], grad_gt[1][mask_g][:, None]))
-        # print(grad_pred[0][mask_mag])
-        # print(grad_pred[1][mask_mag])
-        # print(torch.sum(torch.isnan(grad_pred[0])))
-        # print(torch.sum(torch.isnan(grad_pred[1])))
-        # print(self.pc_loss(grad_pred[0][mask_mag][:, None], grad_gt[0][mask_mag][:, None]))
-        if min(grad_pred[0][mask_mag][:, None].shape) == 0:
-            loss = 0
-        else:
-            loss = (
-                1 - self.pc_loss(grad_pred[0][mask_mag][:, None], grad_gt[0][mask_mag][:, None]))
-        # if min(grad_pred[1][mask_ang][:, None].shape) == 0:
-        #     loss = loss + 0
-        # else:
-        #     loss = loss + (1 - self.pc_loss(grad_pred[1][mask_ang][:, None], grad_gt[1][mask_ang][:, None]))
+        loss = 1 - self.pc_loss(grad_pred_0[:, None], grad_gt_0[:, None])
 
-        # loss = nn.functional.l1_loss(grad_pred[0][mask_g], grad_gt[0][mask_g])
-        # loss = loss + \
-        #     nn.functional.l1_loss(grad_pred[1][mask_g], grad_gt[1][mask_g])
         if not return_interpolated:
             return loss
         return loss, intr_input
